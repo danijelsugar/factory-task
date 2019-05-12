@@ -33,12 +33,12 @@ class TagMeal
         return $this->id;
     }
 
-    public function getTag(): ?TagTranslation
+    public function getTag(): ?Tag
     {
         return $this->tag;
     }
 
-    public function setTag(?TagTranslation $tag): self
+    public function setTag(?Tag $tag): self
     {
         $this->tag = $tag;
 

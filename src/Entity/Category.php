@@ -24,7 +24,7 @@ class Category
     private $slug;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\CategoryTranslation", mappedBy="category", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\CategoryTranslation", mappedBy="category")
      */
     private $categoryTranslations;
 

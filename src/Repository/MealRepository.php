@@ -19,32 +19,75 @@ class MealRepository extends ServiceEntityRepository
         parent::__construct($registry, Meal::class);
     }
 
-    // /**
-    //  * @return Meal[] Returns an array of Meal objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function retrunAll()
     {
         return $this->createQueryBuilder('m')
-            ->andWhere('m.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('m.id', 'ASC')
             ->setMaxResults(10)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Meal
+    public function meals($lang)
     {
         return $this->createQueryBuilder('m')
-            ->andWhere('m.exampleField = :val')
-            ->setParameter('val', $value)
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->where('mt.language=:lang')
+            ->setParameter('lang', $lang)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getResult();
     }
-    */
+
+    public function mealsWtihCategoryNull($lang)
+    {
+        return $this->createQueryBuilder('m')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->where('m.category IS NULL')
+            ->andWhere('mt.language=:lang')
+            ->setParameter('lang', $lang)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function mealsWithCategoyNotNull($lang)
+    {
+        return $this->createQueryBuilder('m')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->where('m.category IS NOT NULL')
+            ->andWhere('mt.language=:lang')
+            ->setParameter('lang', $lang)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function mealsByCategory($lang, $category)
+    {
+        return $this->createQueryBuilder('m')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->where('m.category = :category')
+            ->andWhere('mt.language=:lang')
+            ->setParameter('lang', $lang)
+            ->setParameter('category', $category)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function mealsByTag($lang,$tags)
+    {
+        return $this->createQueryBuilder('m')
+            ->select('m.id,mt.title,mt.description,m.status')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
+            ->where('tm.tag IN (:tag)')
+            ->andWhere('mt.language=:lang')
+            ->setParameter('lang', $lang)
+            ->setParameter('tag', array_values($tags))
+            ->getQuery()
+            ->getResult();
+
+    }
+
 }
