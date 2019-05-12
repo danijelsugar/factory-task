@@ -71,12 +71,12 @@ class HomeController extends AbstractController
         if (isset($request->query->all()['tags'])) {
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByTag($langId, $tags);
-            //dump($tags);
         }
         /**
          * fliters meals by category
          */
         if (isset($request->query->all()['category'])) {
+            //gets all meals with category null
             if ($request->query->all()['category'] == 'null') {
                 $meals = $mr->mealsWtihCategoryNull($langId);
                 $meals = $paginator->paginate(
@@ -96,6 +96,7 @@ class HomeController extends AbstractController
                         ];
                     }
                 }
+            //all meals with category not null
             } elseif ($request->query->all()['category'] == '!null') {
                 $meals = $mr->mealsWithCategoyNotNull($langId);
                 $meals = $paginator->paginate(
@@ -115,7 +116,9 @@ class HomeController extends AbstractController
                         ];
                     }
                 }
-            } else {
+            } 
+            //meals with given category
+            else {
                 $category = $request->query->all()['category'];
                 $meals = $mr->mealsByCategory($langId, $category);
                 if (empty($meals)) {
@@ -141,7 +144,7 @@ class HomeController extends AbstractController
                     }
                 }
             }
-
+        //returns meals with given tags(if multiple tags are send return meals that contain at least one tag)
         } elseif (isset($request->query->all()['tags'])) {
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByTag($langId, $tags);
@@ -167,7 +170,9 @@ class HomeController extends AbstractController
                     }
                 }
             }
-        } else {
+        } 
+        //if no tags or category are sent returns all meals
+        else {
             $meals = $mr->meals($langId);
             $meals = $paginator->paginate(
                 $meals,
@@ -195,7 +200,6 @@ class HomeController extends AbstractController
                 foreach ($meals as $meal) {
                     $categoryId = $meal['category'];
                     $category = $cr->findCatById($categoryId, $langId);
-
                 }
             } else {
                 $category = [];
