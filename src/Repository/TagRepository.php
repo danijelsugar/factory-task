@@ -19,4 +19,16 @@ class TagRepository extends ServiceEntityRepository
         parent::__construct($registry, Tag::class);
     }
 
+    public function tagsById($lang,$id)
+    {
+        return $this->createQueryBuilder('t')
+            ->select('t.id,t.slug,tt.title')
+            ->innerJoin('App\Entity\TagTranslation', 'tt', 'WITH', 't.id=tt.tag')
+            ->where('t.id IN (:id)')
+            ->andWhere('tt.language=:lang')
+            ->setParameter('lang', $lang)
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -19,12 +19,12 @@ class TagMealRepository extends ServiceEntityRepository
         parent::__construct($registry, TagMeal::class);
     }
 
-    public function getMealByTags($tags)
+    public function mealTags($meal)
     {
         return $this->createQueryBuilder('m')
-            ->select('IDENTITY(m.tag),IDENTITY(m.meal)')
-            ->where('m.tag IN (:tags)')
-            ->setParameter('tags', $tags)
+            ->select('IDENTITY(m.tag)')
+            ->where('m.meal = :meal')
+            ->setParameter('meal', $meal)
             ->getQuery()
             ->getResult();
     }

@@ -19,32 +19,13 @@ class IngredientMealRepository extends ServiceEntityRepository
         parent::__construct($registry, IngredientMeal::class);
     }
 
-    // /**
-    //  * @return IngredientMeal[] Returns an array of IngredientMeal objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function mealIngredients($meal)
     {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
-            ->setMaxResults(10)
+        return $this->createQueryBuilder('m')
+            ->select('IDENTITY(m.ingredient)')
+            ->where('m.meal = :meal')
+            ->setParameter('meal', $meal)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?IngredientMeal
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

@@ -19,32 +19,16 @@ class IngredientsRepository extends ServiceEntityRepository
         parent::__construct($registry, Ingredients::class);
     }
 
-    // /**
-    //  * @return Ingredients[] Returns an array of Ingredients objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function ingredientsById($lang,$id)
     {
         return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('i.id', 'ASC')
-            ->setMaxResults(10)
+            ->select('i.id,i.slug,it.title')
+            ->innerJoin('App\Entity\IngredientsTranslation', 'it', 'WITH', 'i.id=it.ingredient')
+            ->where('i.id IN (:id)')
+            ->andWhere('it.language=:lang')
+            ->setParameter('lang', $lang)
+            ->setParameter('id', $id)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Ingredients
-    {
-        return $this->createQueryBuilder('i')
-            ->andWhere('i.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

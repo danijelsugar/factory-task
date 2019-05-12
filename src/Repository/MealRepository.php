@@ -78,7 +78,7 @@ class MealRepository extends ServiceEntityRepository
     public function mealsByTag($lang,$tags)
     {
         return $this->createQueryBuilder('m')
-            ->select('m.id,mt.title,mt.description,m.status')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
             ->where('tm.tag IN (:tag)')
@@ -89,5 +89,7 @@ class MealRepository extends ServiceEntityRepository
             ->getResult();
 
     }
+
+    
 
 }

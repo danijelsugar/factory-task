@@ -3,9 +3,12 @@
 namespace App\Controller;
 
 use App\Repository\CategoryRepository;
+use App\Repository\IngredientMealRepository;
+use App\Repository\IngredientsRepository;
 use App\Repository\LanguageRepository;
 use App\Repository\MealRepository;
 use App\Repository\TagMealRepository;
+use App\Repository\TagRepository;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class HomeController extends AbstractController
 {
-    
+
     /**
      * @Route("/", name="home")
      */
@@ -22,9 +25,12 @@ class HomeController extends AbstractController
         MealRepository $mr,
         Request $request,
         CategoryRepository $cr,
-        TagMealRepository $trm,
+        TagMealRepository $tmr,
         LanguageRepository $lr,
-        PaginatorInterface $paginator
+        PaginatorInterface $paginator,
+        TagRepository $tr,
+        IngredientMealRepository $imr,
+        IngredientsRepository $ir
     ) {
         if (isset($request->query->all()['per_page'])) {
             $per_page = $request->query->all()['per_page'];
@@ -39,7 +45,19 @@ class HomeController extends AbstractController
                     'code' => $langCode,
                 ]
             );
-            $langId = $lang->getId();
+            if (empty($lang)) {
+                $langCode = 'en';
+                $lang = $lr->findOneBy(
+                    [
+                        'code' => $langCode,
+                    ]
+                );
+                $langId = $lang->getId();
+            } else {
+                $langId = $lang->getId();
+            }
+            
+
         } else {
             $langCode = 'en';
             $lang = $lr->findOneBy(
@@ -60,79 +78,14 @@ class HomeController extends AbstractController
          */
         if (isset($request->query->all()['category'])) {
             if ($request->query->all()['category'] == 'null') {
-                $mealsWithCategoryNull = $mr->mealsWtihCategoryNull($langId);
-                $mealsWithCategoryNull = $paginator->paginate(
-                    $mealsWithCategoryNull,
+                $meals = $mr->mealsWtihCategoryNull($langId);
+                $meals = $paginator->paginate(
+                    $meals,
                     $request->query->getInt('page', 1),
                     $per_page
                 );
-                $meta = [
-                    'currentPage' => $mealsWithCategoryNull->getCurrentPageNumber(),
-                    'totalItems' => $mealsWithCategoryNull->getTotalItemCount(),
-                    'itemsPerPage' => $mealsWithCategoryNull->getItemNumberPerPage(),
-                    'totalPages' => $mealsWithCategoryNull->getPageCount(),
-                ];
-                foreach ($mealsWithCategoryNull as $meal) {
-                    $data[] = [
-                        'meal' => [
-                            'id' => $meal['id'],
-                            'title' => $meal['title'],
-                            'description' => $meal['description'],
-                            'status' => $meal['status'],
-                            'category' => $meal['category'],
-                        ],
-                    ];
-                }
-                $links = [
-                    'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                ];
-
-            } elseif ($request->query->all()['category'] == '!null') {
-                $mealsWithCategoryNotNull = $mr->mealsWithCategoyNotNull($langId);
-                $mealsWithCategoryNotNull = $paginator->paginate(
-                    $mealsWithCategoryNotNull,
-                    $request->query->getInt('page', 1),
-                    $per_page
-                );
-                $meta = [
-                    'currentPage' => $mealsWithCategoryNotNull->getCurrentPageNumber(),
-                    'totalItems' => $mealsWithCategoryNotNull->getTotalItemCount(),
-                    'itemsPerPage' => $mealsWithCategoryNotNull->getItemNumberPerPage(),
-                    'totalPages' => $mealsWithCategoryNotNull->getPageCount(),
-                ];
-                foreach ($mealsWithCategoryNotNull as $meal) {
-                    $data[] = [
-                        'meal' => [
-                            'id' => $meal['id'],
-                            'title' => $meal['title'],
-                            'description' => $meal['description'],
-                            'status' => $meal['status'],
-                        ],
-                    ];
-                }
-                $links = [
-                    'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                ];
-
-            } else {
-                $category = $request->query->all()['category'];
-                $mealsByCategory = $mr->mealsByCategory($langId, $category);
-                if (empty($mealsByCategory)) {
-                    echo 'No meils with that category';
-                    exit();
-                } else {
-                    $mealsByCategory = $paginator->paginate(
-                        $mealsByCategory,
-                        $request->query->getInt('page', 1),
-                        $per_page
-                    );
-                    $meta = [
-                        'currentPage' => $mealsByCategory->getCurrentPageNumber(),
-                        'totalItems' => $mealsByCategory->getTotalItemCount(),
-                        'itemsPerPage' => $mealsByCategory->getItemNumberPerPage(),
-                        'totalPages' => $mealsByCategory->getPageCount(),
-                    ];
-                    foreach ($mealsByCategory as $meal) {
+                if (!isset($request->query->all()['with'])) {
+                    foreach ($meals as $meal) {
                         $data[] = [
                             'meal' => [
                                 'id' => $meal['id'],
@@ -142,31 +95,87 @@ class HomeController extends AbstractController
                             ],
                         ];
                     }
-                    $links = [
-                        'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                    ];
+                }
+            } elseif ($request->query->all()['category'] == '!null') {
+                $meals = $mr->mealsWithCategoyNotNull($langId);
+                $meals = $paginator->paginate(
+                    $meals,
+                    $request->query->getInt('page', 1),
+                    $per_page
+                );
+                if (!isset($request->query->all()['with'])) {
+                    foreach ($meals as $meal) {
+                        $data[] = [
+                            'meal' => [
+                                'id' => $meal['id'],
+                                'title' => $meal['title'],
+                                'description' => $meal['description'],
+                                'status' => $meal['status'],
+                            ],
+                        ];
+                    }
+                }
+            } else {
+                $category = $request->query->all()['category'];
+                $meals = $mr->mealsByCategory($langId, $category);
+                if (empty($meals)) {
+                    echo 'No meils with that category';
+                    exit();
+                } else {
+                    $meals = $paginator->paginate(
+                        $meals,
+                        $request->query->getInt('page', 1),
+                        $per_page
+                    );
+                    if (!isset($request->query->all()['with'])) {
+                        foreach ($meals as $meal) {
+                            $data[] = [
+                                'meal' => [
+                                    'id' => $meal['id'],
+                                    'title' => $meal['title'],
+                                    'description' => $meal['description'],
+                                    'status' => $meal['status'],
+                                ],
+                            ];
+                        }
+                    }
                 }
             }
 
         } elseif (isset($request->query->all()['tags'])) {
             $tags = explode(',', $request->query->all()['tags']);
-            $mealsByTag = $mr->mealsByTag($langId, $tags);
-            if (empty($mealsByTag)) {
+            $meals = $mr->mealsByTag($langId, $tags);
+            if (empty($meals)) {
                 echo 'No meals with that tags';
                 exit();
             } else {
-                $mealsByTag = $paginator->paginate(
-                    $mealsByTag,
+                $meals = $paginator->paginate(
+                    $meals,
                     $request->query->getInt('page', 1),
                     $per_page
                 );
-                $meta = [
-                    'currentPage' => $mealsByTag->getCurrentPageNumber(),
-                    'totalItems' => $mealsByTag->getTotalItemCount(),
-                    'itemsPerPage' => $mealsByTag->getItemNumberPerPage(),
-                    'totalPages' => $mealsByTag->getPageCount(),
-                ];
-                foreach ($mealsByTag as $meal) {
+                if (!isset($request->query->all()['with'])) {
+                    foreach ($meals as $meal) {
+                        $data[] = [
+                            'meal' => [
+                                'id' => $meal['id'],
+                                'title' => $meal['title'],
+                                'description' => $meal['description'],
+                                'status' => $meal['status'],
+                            ],
+                        ];
+                    }
+                }
+            }
+        } else {
+            $meals = $mr->meals($langId);
+            $meals = $paginator->paginate(
+                $meals,
+                $request->query->getInt('page', 1),
+                $per_page
+            );
+            if (!isset($request->query->all()['with'])) {
+                foreach ($meals as $meal) {
                     $data[] = [
                         'meal' => [
                             'id' => $meal['id'],
@@ -176,43 +185,65 @@ class HomeController extends AbstractController
                         ],
                     ];
                 }
-                $links = [
-                    'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                ];
             }
+            
 
-        } else {
-            $meals = $mr->meals($langId);
-            $meals = $paginator->paginate(
-                $meals,
-                $request->query->getInt('page', 1),
-                $per_page
-            );
-            $meta = [
-                'currentPage' => $meals->getCurrentPageNumber(),
-                'totalItems' => $meals->getTotalItemCount(),
-                'itemsPerPage' => $meals->getItemNumberPerPage(),
-                'totalPages' => $meals->getPageCount(),
-            ];
-            foreach ($meals as $meal) {
-                $data[] = [
-                        'id' => $meal['id'],
-                        'title' => $meal['title'],
-                        'description' => $meal['description'],
-                        'status' => $meal['status']
-                ];
-            }
-
-            $links = [
-                'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-            ];
         }
 
         if (isset($request->query->all()['with'])) {
             if (strpos($request->query->all()['with'], 'category') !== false) {
-               
+                foreach ($meals as $meal) {
+                    $categoryId = $meal['category'];
+                    $category = $cr->findCatById($categoryId, $langId);
+
+                }
+            } else {
+                $category = [];
+            }
+
+            if (strpos($request->query->all()['with'], 'tag') !== false) {
+                foreach ($meals as $meal) {
+                    $mealId = $meal['id'];
+                    $tags = $tmr->mealTags($mealId);
+                    $tag = $tr->tagsById($langId, $tags);
+
+                }
+            } else {
+                $tag = [];
+            }
+
+            if (strpos($request->query->all()['with'], 'ingredients') !== false) {
+                foreach ($meals as $meal) {
+                    $mealId = $meal['id'];
+                    $ingredients = $imr->mealIngredients($mealId);
+                    $ingredient = $ir->ingredientsById($langId, $ingredients);
+                }
+            } else {
+                $ingredient = [];
+            }
+            foreach ($meals as $meal) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'category' => $category,
+                    'tags' => $tag,
+                    'ingredients' => $ingredient,
+                ];
             }
         }
+
+        $meta = [
+            'currentPage' => $meals->getCurrentPageNumber(),
+            'totalItems' => $meals->getTotalItemCount(),
+            'itemsPerPage' => $meals->getItemNumberPerPage(),
+            'totalPages' => $meals->getPageCount(),
+        ];
+
+        $links = [
+            'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+        ];
 
         $response = new JsonResponse([
             'meta' => $meta,
@@ -223,6 +254,5 @@ class HomeController extends AbstractController
         return $response;
 
     }
-
 
 }
