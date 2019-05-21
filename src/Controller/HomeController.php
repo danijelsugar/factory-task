@@ -41,14 +41,13 @@ class HomeController extends AbstractController
                         'message' => 'Invalid request',
                     ]
                 );
-            } 
-            
+            }
+
             if (isset($request->query->all()['per_page'])) {
                 $per_page = $request->query->all()['per_page'];
             } else {
                 $per_page = 5;
             }
-            
 
             if (isset($request->query->all()['lang'])) {
                 $langCode = $request->query->all()['lang'];
@@ -76,121 +75,39 @@ class HomeController extends AbstractController
             }
 
             $meals = $this->getMeals($request, $mr, $langId);
-
-        }
-
-        /**
-         * fliters meals by category
-         */
-        if (isset($request->query->all()['category'])) {
-            //gets all meals with category null
-            if ($request->query->all()['category'] == 'null') {
-                $meals = $mr->mealsWtihCategoryNull($langId);
-                $meals = $paginator->paginate(
-                    $meals,
-                    $request->query->getInt('page', 1),
-                    $per_page
+            if (empty($meals)) {
+                return new JsonResponse(
+                    [
+                        'message' => 'No meals',
+                    ]
                 );
-                if (!isset($request->query->all()['with'])) {
-                    foreach ($meals as $meal) {
-                        $data[] = [
-                            'meal' => [
-                                'id' => $meal['id'],
-                                'title' => $meal['title'],
-                                'description' => $meal['description'],
-                                'status' => $meal['status'],
-                            ],
-                        ];
-                    }
-                }
-                //all meals with category not null
-            } elseif ($request->query->all()['category'] == '!null') {
-                $meals = $mr->mealsWithCategoyNotNull($langId);
-                $meals = $paginator->paginate(
-                    $meals,
-                    $request->query->getInt('page', 1),
-                    $per_page
-                );
-                if (!isset($request->query->all()['with'])) {
-                    foreach ($meals as $meal) {
-                        $data[] = [
-                            'meal' => [
-                                'id' => $meal['id'],
-                                'title' => $meal['title'],
-                                'description' => $meal['description'],
-                                'status' => $meal['status'],
-                            ],
-                        ];
-                    }
-                }
-            }
-            //meals with given category
-            else {
-                $category = $request->query->all()['category'];
-                $meals = $mr->mealsByCategory($langId, $category);
-                if (empty($meals)) {
-                    return new JsonResponse(
-                        [
-                            'message' => 'No meils with that category',
-                        ]
-                    );
-                } else {
-                    $meals = $paginator->paginate(
-                        $meals,
-                        $request->query->getInt('page', 1),
-                        $per_page
-                    );
-                    if (!isset($request->query->all()['with'])) {
+            } else {
+                if (isset($request->query->all()['with'])) {
+                    if (strpos($request->query->all()['with'], 'category') !== true ) {
                         foreach ($meals as $meal) {
-                            $data[] = [
-                                'meal' => [
-                                    'id' => $meal['id'],
-                                    'title' => $meal['title'],
-                                    'description' => $meal['description'],
-                                    'status' => $meal['status'],
-                                ],
-                            ];
+                            $categoryId = $meal['category'];
+                            $category[$categoryId] = $cr->findCatById($categoryId, $langId);
                         }
                     }
+
+                    if (strpos($request->query->all()['with'], 'tag') !== false) {
+                        foreach ($meals as $meal) {
+                            $mealId = $meal['id'];
+                            $tags = $tmr->mealTags($mealId);
+                            $tag = $tr->tagsById($langId, $tags);
+                            //dump($tag);
+                        }
+                    }
+                } else {
+                    $with = false;
                 }
-            }
-            //returns meals with given tags(if multiple tags are send return meals that contain at least one tag)
-        } elseif (isset($request->query->all()['tags'])) {
-            $tags = explode(',', $request->query->all()['tags']);
-            $meals = $mr->mealsByTag($langId, $tags);
-            if (empty($meals)) {
-                return new JsonResponse([
-                    'message' => 'No meals with that tags',
-                ]);
-            } else {
+                //$mealsArray = $this->getMealDetails($meals,$with,$langId,$request);
+               
                 $meals = $paginator->paginate(
                     $meals,
                     $request->query->getInt('page', 1),
                     $per_page
                 );
-                if (!isset($request->query->all()['with'])) {
-                    foreach ($meals as $meal) {
-                        $data[] = [
-                            'meal' => [
-                                'id' => $meal['id'],
-                                'title' => $meal['title'],
-                                'description' => $meal['description'],
-                                'status' => $meal['status'],
-                            ],
-                        ];
-                    }
-                }
-            }
-        }
-        //if no tags or category are sent returns all meals
-        else {
-            $meals = $mr->meals($langId);
-            $meals = $paginator->paginate(
-                $meals,
-                $request->query->getInt('page', 1),
-                $per_page
-            );
-            if (!isset($request->query->all()['with'])) {
                 foreach ($meals as $meal) {
                     $data[] = [
                         'meal' => [
@@ -198,117 +115,29 @@ class HomeController extends AbstractController
                             'title' => $meal['title'],
                             'description' => $meal['description'],
                             'status' => $meal['status'],
+                            'category' => $category,
+                            'tags' => $tag
                         ],
                     ];
                 }
-            }
 
-        }
-
-        if (isset($request->query->all()['with'])) {
-            if (strpos($request->query->all()['with'], 'category') !== false) {
-                foreach ($meals as $meal) {
-                    $categoryId = $meal['category'];
-                    $category = $cr->findCatById($categoryId, $langId);
-                }
-            } else {
-                $category = [];
-            }
-
-            if (strpos($request->query->all()['with'], 'tags') !== false) {
-                foreach ($meals as $meal) {
-                    $mealId = $meal['id'];
-                    //dump($mealId);
-                    $tags = $tmr->mealTags($mealId);
-                    //dump($tags);
-                    $tag[] = $tr->tagsById($langId, $tags);
-                    //dump($tag);
-
-                }
-            } else {
-                $tag = [];
-            }
-
-            if (strpos($request->query->all()['with'], 'ingredients') !== false) {
-                foreach ($meals as $meal) {
-                    $mealId = $meal['id'];
-                    $ingredients = $imr->mealIngredients($mealId);
-                    $ingredient = $ir->ingredientsById($langId, $ingredients);
-                }
-            } else {
-                $ingredient = [];
-            }
-            foreach ($meals as $meal) {
-                $data[] = [
-                    'id' => $meal['id'],
-                    'title' => $meal['title'],
-                    'description' => $meal['description'],
-                    'status' => $meal['status'],
-                    'category' => $category,
-                    'tags' => $tag,
-                    'ingredients' => $ingredient,
+                $meta = [
+                    'currentPage' => $meals->getCurrentPageNumber(),
+                    'totalItems' => $meals->getTotalItemCount(),
+                    'itemsPerPage' => $meals->getItemNumberPerPage(),
+                    'totalPages' => $meals->getPageCount(),
                 ];
+
+                $links = [
+                    'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+                ];
+
+                return $this->returnMeals($meta, $data, $links);
+
             }
+
         }
 
-        $meta = [
-            'currentPage' => $meals->getCurrentPageNumber(),
-            'totalItems' => $meals->getTotalItemCount(),
-            'itemsPerPage' => $meals->getItemNumberPerPage(),
-            'totalPages' => $meals->getPageCount(),
-        ];
-
-        $links = [
-            'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-        ];
-
-        return $this->returnMeals($meta, $data, $links);
-
-    }
-
-    /**
-     * @param $meta
-     * @param $data
-     * @param $links
-     * @return JsonResponse
-     */
-    public function returnMeals($meta, $data, $links)
-    {
-        $response = new JsonResponse(
-            [
-                'meta' => $meta,
-                'data' => $data,
-                'links' => $links,
-            ]
-        );
-        $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT);
-        return $response;
-    }
-
-    public function getMeals($request, $mr, $lang)
-    {
-        if (isset($request->query->all()['category']) && isset($request->query->all()['diff_time'])) {
-            $category = $request->query->all()['category'];
-            $diffTime = $request->query->all()['diff_time'];
-            $meals = $mr->mealsByCategoryAndDiffTime($lang, $category, $diffTime);
-            dump($meals);
-        } elseif (isset($request->query->all()['category']) && isset($request->query->all()['tags'])) {
-            $category = $request->query->all()['category'];
-            $tags = explode(',', $request->query->all()['tags']);
-            $meals = $mr->mealsByCategoryAndTags($lang,$category,$tags);
-            dump($meals);
-        } elseif (isset($request->query->all()['category'])) {
-            $category = $request->query->all()['category'];
-            $meals = $mr->mealsByCategory($lang, $category);
-            dump($meals);
-        }
-
-        if ((isset($request->query->all()['tags']) && isset($request->query->all()['diff_time']))) {
-            $tags = explode(',', $request->query->all()['tags']);
-            $diffTime = $request->query->all()['diff_time'];
-            $meals = $mr->mealsByTagAndDiffTime($lang,$tags,$diffTime);
-            dump($meals);
-        }
     }
 
     public function validate($request)
@@ -353,7 +182,7 @@ class HomeController extends AbstractController
 
         if (isset($request->query->all()['diff_time'])) {
             if (!ctype_digit($request->query->all()['diff_time']) && $request->query->all()['diff_time'] <= 0) {
-                $valid= false;
+                $valid = false;
             } else {
                 $valid = true;
             }
@@ -374,4 +203,68 @@ class HomeController extends AbstractController
         }
 
     }
+
+    public function getMeals($request, $mr, $lang)
+    {
+        if (isset($request->query->all()['category']) && isset($request->query->all()['diff_time'])) {
+            $category = $request->query->all()['category'];
+            $diffTime = $request->query->all()['diff_time'];
+            $meals = $mr->mealsByCategoryAndDiffTime($lang, $category, $diffTime);
+
+        } elseif (isset($request->query->all()['category']) && isset($request->query->all()['tags'])) {
+            $category = $request->query->all()['category'];
+            $tags = explode(',', $request->query->all()['tags']);
+            $meals = $mr->mealsByCategoryAndTags($lang, $category, $tags);
+
+        } elseif (isset($request->query->all()['category'])) {
+            $category = $request->query->all()['category'];
+            $meals = $mr->mealsByCategory($lang, $category);
+
+        }
+
+        if (isset($request->query->all()['tags']) && isset($request->query->all()['diff_time'])) {
+            $tags = explode(',', $request->query->all()['tags']);
+            $diffTime = $request->query->all()['diff_time'];
+            $meals = $mr->mealsByTagAndDiffTime($lang, $tags, $diffTime);
+
+        } elseif (isset($request->query->all()['tags'])) {
+            $tags = explode(',', $request->query->all()['tags']);
+            $meals = $mr->mealsByTag($lang, $tags);
+
+        }
+
+        return $meals;
+    }
+
+    public function getMealDetails($meals,$with,$lang,$request) 
+    {
+        if($with) {
+            if (strpos($request->query->all()['with'], 'category')) {
+               return 'ee';
+            }
+        }
+    }
+
+    /**
+     * @param $meta
+     * @param $data
+     * @param $links
+     * @return JsonResponse
+     */
+    public function returnMeals($meta, $data, $links)
+    {
+        $response = new JsonResponse(
+            [
+                'meta' => $meta,
+                'data' => $data,
+                'links' => $links,
+            ]
+        );
+        $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT);
+        return $response;
+    }
+
+    
+
+    
 }
