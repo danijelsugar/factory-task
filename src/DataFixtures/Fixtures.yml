@@ -1,6 +1,6 @@
 App\Entity\Category:
   category_{1..10}:
-    slug: CatSlug<current()>
+    slug: <word()>
 
 App\Entity\Language:
   language_en:
@@ -20,19 +20,19 @@ App\Entity\CategoryTranslation:
   categoryTranslation_en{@category_*}:
     category: <current()>
     language: "@language_en"
-    title: Naslov kategorije na EN
+    title: <word()>
   categoryTranslation_de{@category_*}:
     category: <current()>
     language: "@language_de"
-    title: Naslov kategorije na DE
+    title: <word()>
   categoryTranslation_hr{@category_*}:
     category: <current()>
     language: "@language_hr"
-    title: Naslov kategorije na HR
+    title: <word()>
   categoryTranslation_es{@category_*}:
     category: <current()>
     language: "@language_es"
-    title: Naslov kategorije na ES
+    title: <word()>
 
 App\Entity\Meal:
   meal_{1..10}:
@@ -46,69 +46,69 @@ App\Entity\MealTranslation:
   mealTranslation_en{@meal_*}:
     meal: <current()>
     language: "@language_en"
-    title: Naslov jela na EN
-    description: Opis jela na EN
+    title: <word()>
+    description: <sentence()>
   mealTranslation_de{@meal_*}:
     meal: <current()>
     language: "@language_de"
-    title: Naslov jela na DE
-    description: Opis jela na DE
+    title: <word()>
+    description: <sentence()>
   mealTranslation_hr{@meal_*}:
     meal: <current()>
     language: "@language_hr"
-    title: Naslov jela na HR
-    description: Opis jela na HR
+    title: <word()>
+    description: <sentence()>
   mealTranslation_es{@meal_*}:
     meal: <current()>
     language: "@language_es"
-    title: Naslov jela na ES
-    description: Opis jela na ES
+    title: <word()>
+    description: <sentence()>
 
 App\Entity\Ingredients:
     ingredient_{1..10}:
-      slug: IngredientSlug<current()>
+      slug: <word()>
 
 App\Entity\IngredientsTranslation:
   ingredientTranslation_en{@ingredient_*}:
     ingredient: <current()>
     language: "@language_en"
-    title: Naslov sastojka na EN
+    title: <word()>
   ingredientTranslation_de{@ingredient_*}:
     ingredient: <current()>
     language: "@language_de"
-    title: Naslov sastojka na DE
+    title: <word()>
   ingredientTranslation_hr{@ingredient_*}:
     ingredient: <current()>
     language: "@language_hr"
-    title: Naslov sastojka na HR
+    title: <word()>
   ingredientTranslation_es{@ingredient_*}:
     ingredient: <current()>
     language: "@language_es"
-    title: Naslov sastojka na ES
+    title: <word()>
 
 
 
 App\Entity\Tag:
   tag_{1..10}:
-    slug: Tag slug <current()>
+    slug: <word()>
 
 App\Entity\TagTranslation:
   tagTranslation_en{@tag_*}:
     tag: <current()>
     language: "@language_en"
-    title: Naslov taga na EN
+    title: <word()>
   tagTranslation_den{@tag_*}:
     tag: <current()>
     language: "@language_de"
-    title: Naslov taga na DE
+    title: <word()>
   tagTranslation_hr{@tag_*}:
     tag: <current()>
     language: "@language_hr"
-    title: Naslov taga na HR
+    title: <word()>
   tagTranslation_es{@tag_*}:
     tag: <current()>
     language: "@language_es"
-    title: Naslov taga na ES
+    title: <word()>
 
 App\Entity\TagMeal:
   TagMeal_{@meal_*}:
