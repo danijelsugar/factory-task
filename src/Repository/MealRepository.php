@@ -19,14 +19,6 @@ class MealRepository extends ServiceEntityRepository
         parent::__construct($registry, Meal::class);
     }
 
-    public function retrunAll()
-    {
-        return $this->createQueryBuilder('m')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
-    }
-
     public function meals($lang)
     {
         return $this->createQueryBuilder('m')
@@ -34,6 +26,21 @@ class MealRepository extends ServiceEntityRepository
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->where('mt.language=:lang')
             ->setParameter('lang', $lang)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function mealsByDiffTime($lang,$diffTime)
+    {
+        $diffTime = date('Y-m-d', $diffTime);
+
+        return $this->createQueryBuilder('m')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+            ->where('mt.language=:lang')
+            ->andWhere('m.createdAt > :diffTime')
+            ->setParameter('lang', $lang)
+            ->setParameter('diffTime', $diffTime)
             ->getQuery()
             ->getResult();
     }

@@ -74,8 +74,9 @@ class HomeController extends AbstractController
                 $langId = $lang->getId();
             }
 
-            $meals = $this->getMeals($request, $mr, $langId);
-            if (empty($meals)) {
+            $meals = $this->getMeals($request, $mr, $langId, $paginator);
+            
+            if (empty($meals->getItems())) {
                 return new JsonResponse(
                     [
                         'message' => 'No meals',
@@ -86,8 +87,10 @@ class HomeController extends AbstractController
                     if (strpos($request->query->all()['with'], 'category') !== true ) {
                         foreach ($meals as $meal) {
                             $categoryId = $meal['category'];
-                            $category[$categoryId] = $cr->findCatById($categoryId, $langId);
+                            $category = $cr->findCatById($categoryId, $langId);
                         }
+                    } else {
+                        $category = '';
                     }
 
                     if (strpos($request->query->all()['with'], 'tag') !== false) {
@@ -95,68 +98,106 @@ class HomeController extends AbstractController
                             $mealId = $meal['id'];
                             $tags = $tmr->mealTags($mealId);
                             $tag = $tr->tagsById($langId, $tags);
-                            //dump($tag);
                         }
+                    } else {
+                        $tag= '';
                     }
+
+                    if (strpos($request->query->all()['with'], 'ingredients') !== false) {
+                        foreach ($meals as $meal) {
+                            $mealId = $meal['id'];
+                            $ingredients = $imr->mealIngredients($mealId);
+                            $ingredient = $ir->ingredientsById($langId, $ingredients);
+                        }
+                    } else {
+                        $ingredient = '';
+                    }
+                    
+                    $meta = [
+                        'currentPage' => $meals->getCurrentPageNumber(),
+                        'totalItems' => $meals->getTotalItemCount(),
+                        'itemsPerPage' => $meals->getItemNumberPerPage(),
+                        'totalPages' => $meals->getPageCount(),
+                    ];
+
+                    foreach ($meals as $meal) {
+                        $data[] = [
+                                'id' => $meal['id'],
+                                'title' => $meal['title'],
+                                'description' => $meal['description'],
+                                'status' => $meal['status'],
+                                'category' => $category,
+                                'tags' => $tag,
+                                'ingredients' => $ingredient
+                        ];
+                    }
+                    
+                    $links = [
+                        'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+                    ];
                 } else {
-                    $with = false;
-                }
-                //$mealsArray = $this->getMealDetails($meals,$with,$langId,$request);
-               
-                $meals = $paginator->paginate(
-                    $meals,
-                    $request->query->getInt('page', 1),
-                    $per_page
-                );
-                foreach ($meals as $meal) {
-                    $data[] = [
-                        'meal' => [
-                            'id' => $meal['id'],
-                            'title' => $meal['title'],
-                            'description' => $meal['description'],
-                            'status' => $meal['status'],
-                            'category' => $category,
-                            'tags' => $tag
-                        ],
+                    
+
+                    $meta = [
+                        'currentPage' => $meals->getCurrentPageNumber(),
+                        'totalItems' => $meals->getTotalItemCount(),
+                        'itemsPerPage' => $meals->getItemNumberPerPage(),
+                        'totalPages' => $meals->getPageCount(),
+                    ];
+
+                    foreach ($meals as $meal) {
+                        $data[] = [
+                                'id' => $meal['id'],
+                                'title' => $meal['title'],
+                                'description' => $meal['description'],
+                                'status' => $meal['status'],
+                        ];
+                    }
+                    
+                    $links = [
+                        'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
                     ];
                 }
-
-                $meta = [
-                    'currentPage' => $meals->getCurrentPageNumber(),
-                    'totalItems' => $meals->getTotalItemCount(),
-                    'itemsPerPage' => $meals->getItemNumberPerPage(),
-                    'totalPages' => $meals->getPageCount(),
-                ];
-
-                $links = [
-                    'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                ];
-
+               
                 return $this->returnMeals($meta, $data, $links);
 
             }
 
+        } else {
+            return new JsonResponse(
+                [
+                    'message' => 'Enter get parameters',
+                ]
+            );
         }
 
     }
 
+    /**
+     * @param Request $request
+     * @return boolean
+     */
     public function validate($request)
     {
-
+        $validArray = [];
         if (isset($request->query->all()['per_page'])) {
             if (!ctype_digit($request->query->all()['per_page'])) {
-                $valid = false;
+                $validPerPage = false;
+                $validArray[] = $validPerPage;
             } else {
-                $valid = true;
+                $validPerPage = true;
+                $validArray[] = $validPerPage;
             }
         }
 
         if (isset($request->query->all()['category'])) {
             $category = $request->query->all()['category'];
             if (ctype_digit($category) || $category === 'null' || $category === '!null') {
-                $valid = true;
+                $validCategory = true;
+                $validArray[] = $validCategory;
             } else {
-                $valid = false;
+                $validCategory = false;
+                $validArray[] = $validCategory;
             }
         }
 
@@ -164,9 +205,11 @@ class HomeController extends AbstractController
             $tags = explode(',', $request->query->all()['tags']);
             foreach ($tags as $tag) {
                 if (ctype_digit($tag)) {
-                    $valid = true;
+                    $validTags = true;
+                    $validArray[] = $validTags;
                 } else {
-                    $valid = false;
+                    $validTags = false;
+                    $validArray[] = $validTags;
                 }
             }
         }
@@ -174,37 +217,48 @@ class HomeController extends AbstractController
         if (isset($request->query->all()['lang'])) {
             if (is_string($request->query->all()['lang']) && !ctype_digit($request->query->all()['lang']) &&
                 strlen($request->query->all()['lang']) == 2) {
-                $valid = true;
+                $validLang = true;
+                $validArray[] = $validLang;
             } else {
-                $valid = false;
+                $validLang = false;
+                $validArray[] = $validLang;
             }
         }
 
         if (isset($request->query->all()['diff_time'])) {
             if (!ctype_digit($request->query->all()['diff_time']) && $request->query->all()['diff_time'] <= 0) {
-                $valid = false;
+                $validDiffTime = false;
+                $validArray[] = $validDiffTime;
             } else {
-                $valid = true;
+                $validDiffTime = true;
+                $validArray[] = $validDiffTime;
             }
         }
 
         if (isset($request->query->all()['page'])) {
             if (!ctype_digit($request->query->all()['page'])) {
-                $valid = false;
+                $validPage = false;
+                $validArray[] = $validPage;
             } else {
-                $valid = true;
+                $validPage = true;
+                $validArray[] = $validPage;
             }
         }
-
-        if ($valid) {
-            return true;
-        } else {
+        
+        if (in_array(false, $validArray)) {
             return false;
+        } else {
+            return true;
         }
 
     }
 
-    public function getMeals($request, $mr, $lang)
+    /**
+     * @param Reuqest $request
+     * @param MealRepository $mr
+     * @param lang
+     */
+    public function getMeals($request, $mr, $lang, $paginator)
     {
         if (isset($request->query->all()['category']) && isset($request->query->all()['diff_time'])) {
             $category = $request->query->all()['category'];
@@ -220,9 +274,7 @@ class HomeController extends AbstractController
             $category = $request->query->all()['category'];
             $meals = $mr->mealsByCategory($lang, $category);
 
-        }
-
-        if (isset($request->query->all()['tags']) && isset($request->query->all()['diff_time'])) {
+        } elseif (isset($request->query->all()['tags']) && isset($request->query->all()['diff_time'])) {
             $tags = explode(',', $request->query->all()['tags']);
             $diffTime = $request->query->all()['diff_time'];
             $meals = $mr->mealsByTagAndDiffTime($lang, $tags, $diffTime);
@@ -231,18 +283,33 @@ class HomeController extends AbstractController
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByTag($lang, $tags);
 
+        } elseif (isset($request->query->all()['diff_time'])) {
+            $diffTime = $request->query->all()['diff_time'];
+            $meals = $mr->mealsByDiffTime($lang,$diffTime);
+        } else {
+            $meals = $mr->meals($lang);
         }
+
+        $meals = $this->paginate($meals,$request,$paginator);
 
         return $meals;
     }
 
-    public function getMealDetails($meals,$with,$lang,$request) 
+    /**
+     * @param $meals
+     * @param Request $request
+     * @param PaginatorInterface $paginator
+     * @return PaginatorInterface
+     */
+    public function paginate($meals, $request, $paginator)
     {
-        if($with) {
-            if (strpos($request->query->all()['with'], 'category')) {
-               return 'ee';
-            }
-        }
+        $meals = $paginator->paginate(
+            $meals,
+            $request->query->getInt('page', 1),
+            $request->query->getInt('per_page', 5)
+        );
+
+        return $meals;
     }
 
     /**
@@ -263,8 +330,4 @@ class HomeController extends AbstractController
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT);
         return $response;
     }
-
-    
-
-    
 }
