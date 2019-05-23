@@ -224,7 +224,8 @@ class HomeController extends AbstractController
         }
 
         if (isset($request->query->all()['diff_time'])) {
-            if (!ctype_digit($request->query->all()['diff_time']) && $request->query->all()['diff_time'] <= 0) {
+            if (!ctype_digit($request->query->all()['diff_time']) || $request->query->all()['diff_time'] <= 0 ||
+                is_float($request->query->all()['diff_time'])) {
                 $validDiffTime = false;
                 $validArray[] = $validDiffTime;
             } else {
