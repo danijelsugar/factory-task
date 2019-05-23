@@ -178,6 +178,68 @@ class MealRepository extends ServiceEntityRepository
         return $meals;
     }
 
+    public function mealsByCategoryAndTagsAndDiffTime($lang, $category, $diffTime, $tags)
+    {
+        $diffTime = date('Y-m-d', $diffTime);
+        $num = count($tags);
+        
+        if ($category === 'null') {
+            $meals = $this->createQueryBuilder('m')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+                ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
+                ->where('m.category IS NULL')
+                ->andWhere('mt.language=:lang')
+                ->andWhere('tm.tag IN (:tags)')
+                ->andWhere('m.createdAt > :diffTime')
+                ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
+                ->having('COUNT(DISTINCT(tm.tag)) =:num')
+                ->setParameter('lang', $lang)
+                ->setParameter('tags', array_values($tags))
+                ->setParameter('num', $num)
+                ->setParameter('diffTime', $diffTime)
+                ->getQuery()
+                ->getResult();
+        } elseif ($category === '!null') {
+            $meals = $this->createQueryBuilder('m')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+                ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
+                ->where('m.category IS NOT NULL')
+                ->andWhere('mt.language=:lang')
+                ->andWhere('tm.tag IN (:tags)')
+                ->andWhere('m.createdAt > :diffTime')
+                ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
+                ->having('COUNT(DISTINCT(tm.tag)) =:num')
+                ->setParameter('lang', $lang)
+                ->setParameter('tags', array_values($tags))
+                ->setParameter('num', $num)
+                ->setParameter('diffTime', $diffTime)
+                ->getQuery()
+                ->getResult();
+        } else {
+            $meals = $this->createQueryBuilder('m')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
+                ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
+                ->where('m.category=:category')
+                ->andWhere('mt.language=:lang')
+                ->andWhere('tm.tag IN (:tags)')
+                ->andWhere('m.createdAt > :diffTime')
+                ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
+                ->having('COUNT(DISTINCT(tm.tag)) =:num')
+                ->setParameter('category', $category)
+                ->setParameter('lang', $lang)
+                ->setParameter('tags', array_values($tags))
+                ->setParameter('num', $num)
+                ->setParameter('diffTime', $diffTime)
+                ->getQuery()
+                ->getResult();
+        }
+
+        return $meals;
+    }
+
     public function mealsByTag($lang, $tags)
     {
         $num = count($tags);
