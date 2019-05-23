@@ -264,34 +264,27 @@ class HomeController extends AbstractController
             $diffTime = $request->query->all()['diff_time'];
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByCategoryAndTagsAndDiffTime($lang,$category,$diffTime,$tags);
-            dump('1');
         } elseif (isset($request->query->all()['category']) && isset($request->query->all()['diff_time'])) {
             $category = $request->query->all()['category'];
             $diffTime = $request->query->all()['diff_time'];
             $meals = $mr->mealsByCategoryAndDiffTime($lang, $category, $diffTime);
-            dump('2');
         } elseif (isset($request->query->all()['category']) && isset($request->query->all()['tags'])) {
             $category = $request->query->all()['category'];
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByCategoryAndTags($lang, $category, $tags);
-            dump('3');
         } elseif (isset($request->query->all()['category'])) {
             $category = $request->query->all()['category'];
             $meals = $mr->mealsByCategory($lang, $category);
-            dump('4');
         } elseif (isset($request->query->all()['tags']) && isset($request->query->all()['diff_time'])) {
             $tags = explode(',', $request->query->all()['tags']);
             $diffTime = $request->query->all()['diff_time'];
             $meals = $mr->mealsByTagAndDiffTime($lang, $tags, $diffTime);
-            dump('5');
         } elseif (isset($request->query->all()['tags'])) {
             $tags = explode(',', $request->query->all()['tags']);
             $meals = $mr->mealsByTag($lang, $tags);
-            dump('6');
         } elseif (isset($request->query->all()['diff_time'])) {
             $diffTime = $request->query->all()['diff_time'];
             $meals = $mr->mealsByDiffTime($lang,$diffTime);
-            dump('7');
         } else {
             $meals = $mr->meals($lang);
         }
