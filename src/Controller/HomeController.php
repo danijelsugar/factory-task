@@ -152,9 +152,8 @@ class HomeController extends AbstractController
                         ];
                     }
                     
-                    $links = [
-                        'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                    ];
+                    $links = $this->returnLinks($meals, $request);
+                    
                 }
                
                 return $this->returnMeals($meta, $data, $links);
@@ -331,5 +330,42 @@ class HomeController extends AbstractController
         );
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT);
         return $response;
+    }
+
+    /**
+     * @param $meals
+     * @return JsonResponse
+     */
+    public function returnLinks($meals,$request)
+    {
+
+        if ($meals->getCurrentPageNumber() < 2) {
+            $prev = null;
+        } else {
+            $path = parse_url($request->getUri());
+            $urlString = $path['query'];
+            parse_str($urlString,$newString);
+            $newString['page'] =  $meals->getCurrentPageNumber()-1;
+            $prev = http_build_query($newString);
+            $prev = $path['scheme'] . '://' . $path['host'] . '/?' . $prev;
+        }
+
+        if ($meals->getCurrentPageNumber() == $meals->getPageCount()) {
+            $next = null;
+        } else {
+            $path = parse_url($request->getUri());
+            $urlString = $path['query'];
+            parse_str($urlString,$newString);
+            $newString['page'] =  $meals->getCurrentPageNumber()+1;
+            $next = http_build_query($newString);
+            $next = $path['scheme'] . '://' . $path['host'] . '/?' . $next;
+        }
+
+        $links = [
+            'prev' => $prev,
+            'self' => $request->getUri(),
+            'next' => $next
+        ];
+        return $links;
     }
 }
