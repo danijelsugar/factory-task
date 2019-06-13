@@ -25,7 +25,9 @@ class MealRepository extends ServiceEntityRepository
             ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->where('mt.language=:lang')
+            ->andWhere('m.status=:created')
             ->setParameter('lang', $lang)
+            ->setParameter('created', 'created')
             ->getQuery()
             ->getResult();
     }
