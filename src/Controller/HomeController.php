@@ -82,33 +82,22 @@ class HomeController extends AbstractController
                 );
             } else {
                 if (isset($request->query->all()['with'])) {
-                    if (strpos($request->query->all()['with'], 'category') !== true ) {
-                        foreach ($meals as $meal) {
-                            $categoryId = $meal['category'];
-                            $category = $cr->findCatById($categoryId, $langId);
-                        }
+                    if (strpos($request->query->all()['with'], 'category') !== false ) {
+                        $categoryWith = true;
                     } else {
-                        $category = '';
+                        $categoryWith = false;
                     }
 
-                    if (strpos($request->query->all()['with'], 'tag') !== false) {
-                        foreach ($meals as $meal) {
-                            $mealId = $meal['id'];
-                            $tags = $tmr->mealTags($mealId);
-                            $tag = $tr->tagsById($langId, $tags);
-                        }
+                    if (strpos($request->query->all()['with'], 'tags') !== false) {
+                        $tagWith = true;
                     } else {
-                        $tag= '';
+                        $tagWith= false;
                     }
-
                     if (strpos($request->query->all()['with'], 'ingredients') !== false) {
-                        foreach ($meals as $meal) {
-                            $mealId = $meal['id'];
-                            $ingredients = $imr->mealIngredients($mealId);
-                            $ingredient = $ir->ingredientsById($langId, $ingredients);
-                        }
+                        $ingredientWith = true;
+                        
                     } else {
-                        $ingredient = '';
+                        $ingredientWith = false;
                     }
                     
                     $meta = [
@@ -119,6 +108,31 @@ class HomeController extends AbstractController
                     ];
 
                     foreach ($meals as $meal) {
+                        if ($categoryWith) {
+                            $categoryId = $meal['category'];
+                            $category = $cr->findCatById($categoryId, $langId);
+                            if (empty($category)) {
+                                $category = null;
+                            }
+                        } else {
+                            $category = '';
+                        }
+
+                        if ($tagWith) {
+                            $mealId = $meal['id'];
+                            $tags = $tmr->mealTags($mealId);
+                            $tag = $tr->tagsById($langId, $tags);
+                        } else {
+                            $tag = '';
+                        }
+
+                        if ($ingredientWith) {
+                            $mealId = $meal['id'];
+                            $ingredients = $imr->mealIngredients($mealId);
+                            $ingredient = $ir->ingredientsById($langId, $ingredients);
+                        } else {
+                            $ingredient = '';
+                        }
                         $data[] = [
                                 'id' => $meal['id'],
                                 'title' => $meal['title'],
@@ -130,12 +144,9 @@ class HomeController extends AbstractController
                         ];
                     }
                     
-                    $links = [
-                        'self' => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
-                    ];
+                    $links = $this->returnLinks($meals, $request);
                 } else {
                     
-
                     $meta = [
                         'currentPage' => $meals->getCurrentPageNumber(),
                         'totalItems' => $meals->getTotalItemCount(),
