@@ -73,7 +73,7 @@ class HomeController extends AbstractController
             }
 
             $meals = $this->getMeals($request, $mr, $langId, $paginator);
-            
+
             if (empty($meals->getItems())) {
                 return new JsonResponse(
                     [
@@ -82,23 +82,8 @@ class HomeController extends AbstractController
                 );
             } else {
                 if (isset($request->query->all()['with'])) {
-                    if (strpos($request->query->all()['with'], 'category') !== false ) {
-                        $categoryWith = true;
-                    } else {
-                        $categoryWith = false;
-                    }
-
-                    if (strpos($request->query->all()['with'], 'tags') !== false) {
-                        $tagWith = true;
-                    } else {
-                        $tagWith= false;
-                    }
-                    if (strpos($request->query->all()['with'], 'ingredients') !== false) {
-                        $ingredientWith = true;
-                        
-                    } else {
-                        $ingredientWith = false;
-                    }
+                    
+                    $data = $this->getMealsWith($request,$meals,$cr,$tmr,$tr,$imr,$ir,$langId);
                     
                     $meta = [
                         'currentPage' => $meals->getCurrentPageNumber(),
@@ -107,43 +92,6 @@ class HomeController extends AbstractController
                         'totalPages' => $meals->getPageCount(),
                     ];
 
-                    foreach ($meals as $meal) {
-                        if ($categoryWith) {
-                            $categoryId = $meal['category'];
-                            $category = $cr->findCatById($categoryId, $langId);
-                            if (empty($category)) {
-                                $category = null;
-                            }
-                        } else {
-                            $category = '';
-                        }
-
-                        if ($tagWith) {
-                            $mealId = $meal['id'];
-                            $tags = $tmr->mealTags($mealId);
-                            $tag = $tr->tagsById($langId, $tags);
-                        } else {
-                            $tag = '';
-                        }
-
-                        if ($ingredientWith) {
-                            $mealId = $meal['id'];
-                            $ingredients = $imr->mealIngredients($mealId);
-                            $ingredient = $ir->ingredientsById($langId, $ingredients);
-                        } else {
-                            $ingredient = '';
-                        }
-                        $data[] = [
-                                'id' => $meal['id'],
-                                'title' => $meal['title'],
-                                'description' => $meal['description'],
-                                'status' => $meal['status'],
-                                'category' => $category,
-                                'tags' => $tag,
-                                'ingredients' => $ingredient
-                        ];
-                    }
-                    
                     $links = $this->returnLinks($meals, $request);
                 } else {
                     
@@ -300,11 +248,128 @@ class HomeController extends AbstractController
             $meals = $mr->meals($lang);
         }
 
-        
-
         $meals = $this->paginate($meals,$request,$paginator);
 
         return $meals;
+    }
+
+    /**
+     * @param $meals
+     * @param Request $request
+     * @param CategoryRepository $cr
+     * @param TagMealRepository $tmr
+     * @param TagRepository $tr
+     * @param IngredientMealRepository $imr
+     * @param IngredientsRepository $ir
+     * @param lang
+     * @return $data
+     */
+    public function getMealsWith($request, $meals, $cr, $tmr, $tr, $imr, $ir, $langId)
+    {
+        if (strpos($request->query->all()['with'], 'category') !== false ) {
+            $categoryWith = true;
+        } else {
+            $categoryWith = false;
+        }
+
+        if (strpos($request->query->all()['with'], 'tags') !== false) {
+            $tagWith = true;
+        } else {
+            $tagWith= false;
+        }
+        if (strpos($request->query->all()['with'], 'ingredients') !== false) {
+            $ingredientWith = true;
+        } else {
+            $ingredientWith = false;
+        }
+        
+        
+
+        foreach ($meals as $meal) {
+            
+            $categoryId = $meal['category'];
+            $category = $cr->findCatById($categoryId, $langId);
+            if (empty($category)) {
+                $category = null;
+            }
+        
+            $mealId = $meal['id'];
+            $tags = $tmr->mealTags($mealId);
+            $tag = $tr->tagsById($langId, $tags);
+        
+        
+            $mealId = $meal['id'];
+            $ingredients = $imr->mealIngredients($mealId);
+            $ingredient = $ir->ingredientsById($langId, $ingredients);
+            
+
+            if ($categoryWith && $tagWith && $ingredientWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'category' => $category,
+                    'tags' => $tag,
+                    'ingredients' => $ingredient
+                ];
+            } elseif ($categoryWith && $tagWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'category' => $category,
+                    'tags' => $tag,
+                ];
+            } elseif ($categoryWith && $ingredientWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'category' => $category,
+                    'ingredients' => $ingredient
+                ];
+            } elseif ($tagWith && $ingredientWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'tags' => $tag,
+                    'ingredients' => $ingredient
+                ];
+            } elseif ($categoryWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'category' => $category,
+                ];
+            } elseif ($tagWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'tags' => $tag,
+                ];
+            } elseif ($ingredientWith) {
+                $data[] = [
+                    'id' => $meal['id'],
+                    'title' => $meal['title'],
+                    'description' => $meal['description'],
+                    'status' => $meal['status'],
+                    'ingredients' => $ingredient
+                ];
+            }
+
+            
+        }
+
+        return $data;
     }
 
     /**
