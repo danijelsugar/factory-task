@@ -22,12 +22,10 @@ class MealRepository extends ServiceEntityRepository
     public function meals($lang)
     {
         return $this->createQueryBuilder('m')
-            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->where('mt.language=:lang')
-            ->andWhere('m.status=:created')
             ->setParameter('lang', $lang)
-            ->setParameter('created', 'created')
             ->getQuery()
             ->getResult();
     }
@@ -55,9 +53,7 @@ class MealRepository extends ServiceEntityRepository
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NULL')
                 ->andWhere('mt.language=:lang')
-                ->andWhere('m.status=:created')
                 ->setParameter('lang', $lang)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         } elseif ($category === '!null') {
@@ -66,9 +62,7 @@ class MealRepository extends ServiceEntityRepository
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NOT NULL')
                 ->andWhere('mt.language=:lang')
-                ->andWhere('m.status=:created')
                 ->setParameter('lang', $lang)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         } else {
@@ -77,10 +71,8 @@ class MealRepository extends ServiceEntityRepository
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category = :category')
                 ->andWhere('mt.language=:lang')
-                ->andWhere('m.status=:created')
                 ->setParameter('lang', $lang)
                 ->setParameter('category', $category)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         }
@@ -143,13 +135,11 @@ class MealRepository extends ServiceEntityRepository
                 ->where('m.category IS NULL')
                 ->andWhere('mt.language=:lang')
                 ->andWhere('tm.tag IN (:tags)')
-                ->andWhere('m.status=:created')
                 ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
                 ->having('COUNT(DISTINCT(tm.tag)) =:num')
                 ->setParameter('lang', $lang)
                 ->setParameter('tags', array_values($tags))
                 ->setParameter('num', $num)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         } elseif ($category === '!null') {
@@ -160,13 +150,11 @@ class MealRepository extends ServiceEntityRepository
                 ->where('m.category IS NOT NULL')
                 ->andWhere('mt.language=:lang')
                 ->andWhere('tm.tag IN (:tags)')
-                ->andWhere('m.status=:created')
                 ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
                 ->having('COUNT(DISTINCT(tm.tag)) =:num')
                 ->setParameter('lang', $lang)
                 ->setParameter('tags', array_values($tags))
                 ->setParameter('num', $num)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         } else {
@@ -176,15 +164,13 @@ class MealRepository extends ServiceEntityRepository
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category=:category')
                 ->andWhere('mt.language=:lang')
-                ->andWhere('tm.tag IN (:tags)')
-                ->andWhere('m.status=:created')
+                ->andWhere('tm.tag IN (:tags)') 
                 ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
                 ->having('COUNT(DISTINCT(tm.tag)) =:num')
                 ->setParameter('category', $category)
                 ->setParameter('lang', $lang)
                 ->setParameter('tags', array_values($tags))
                 ->setParameter('num', $num)
-                ->setParameter('created', 'created')
                 ->getQuery()
                 ->getResult();
         }
@@ -263,13 +249,11 @@ class MealRepository extends ServiceEntityRepository
             ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
             ->where('tm.tag IN (:tag)')
             ->andWhere('mt.language=:lang')
-            ->andWhere('m.status=:created')
             ->groupBy('m.id,mt.title,mt.description,m.status,m.category')
             ->having('COUNT(DISTINCT(tm.tag)) =:num')
             ->setParameter('lang', $lang)
             ->setParameter('tag', array_values($tags))
             ->setParameter('num', $num)
-            ->setParameter('created', 'created')
             ->getQuery()
             ->getResult();
 
