@@ -35,7 +35,7 @@ class MealRepository extends ServiceEntityRepository
         $diffTime = date('Y-m-d', $diffTime);
 
         return $this->createQueryBuilder('m')
-            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->where('mt.language=:lang')
             ->andWhere('m.createdAt > :diffTime OR m.updatedAt > :diffTime OR m.deletedAt > :diffTime')
@@ -49,7 +49,7 @@ class MealRepository extends ServiceEntityRepository
     {
         if ($category === 'null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NULL')
                 ->andWhere('mt.language=:lang')
@@ -58,7 +58,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } elseif ($category === '!null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NOT NULL')
                 ->andWhere('mt.language=:lang')
@@ -67,7 +67,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } else {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category = :category')
                 ->andWhere('mt.language=:lang')
@@ -87,7 +87,7 @@ class MealRepository extends ServiceEntityRepository
 
         if ($category === 'null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NULL')
                 ->andWhere('mt.language=:lang')
@@ -98,7 +98,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } elseif ($category === '!null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category IS NOT NULL')
                 ->andWhere('mt.language=:lang')
@@ -109,7 +109,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } else {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,m.createdAt,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,m.createdAt,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->where('m.category = :category')
                 ->andWhere('mt.language=:lang')
@@ -129,7 +129,7 @@ class MealRepository extends ServiceEntityRepository
         $num = count($tags);
         if ($category === 'null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category IS NULL')
@@ -144,7 +144,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } elseif ($category === '!null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category IS NOT NULL')
@@ -159,7 +159,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } else {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category=:category')
@@ -185,7 +185,7 @@ class MealRepository extends ServiceEntityRepository
         
         if ($category === 'null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category IS NULL')
@@ -202,7 +202,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } elseif ($category === '!null') {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category IS NOT NULL')
@@ -219,7 +219,7 @@ class MealRepository extends ServiceEntityRepository
                 ->getResult();
         } else {
             $meals = $this->createQueryBuilder('m')
-                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+                ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
                 ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
                 ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
                 ->where('m.category=:category')
@@ -244,7 +244,7 @@ class MealRepository extends ServiceEntityRepository
     {
         $num = count($tags);
         return $this->createQueryBuilder('m')
-            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
             ->where('tm.tag IN (:tag)')
@@ -265,7 +265,7 @@ class MealRepository extends ServiceEntityRepository
         $diffTime = date('Y-m-d', $diffTime);
 
         return $this->createQueryBuilder('m')
-            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category')
+            ->select('m.id,mt.title,mt.description,m.status,IDENTITY(m.category) as category,m.createdAt,m.updatedAt,m.deletedAt')
             ->innerJoin('App\Entity\MealTranslation', 'mt', 'WITH', 'm.id=mt.meal')
             ->innerJoin('App\Entity\TagMeal', 'tm', 'WITH', 'm.id=tm.meal')
             ->where('tm.tag IN (:tag)')

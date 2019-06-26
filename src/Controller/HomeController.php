@@ -73,7 +73,7 @@ class HomeController extends AbstractController
             }
 
             $meals = $this->getMeals($request, $mr, $langId, $paginator);
-
+            
             if (empty($meals->getItems())) {
                 return new JsonResponse(
                     [
@@ -107,7 +107,7 @@ class HomeController extends AbstractController
                                 'id' => $meal['id'],
                                 'title' => $meal['title'],
                                 'description' => $meal['description'],
-                                'status' => $meal['status'],
+                                'status' => $this->getMealStatus($request,$meal)
                         ];
                     }
                     
@@ -308,7 +308,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'category' => $category,
                     'tags' => $tag,
                     'ingredients' => $ingredient
@@ -318,7 +318,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' =>$this->getMealStatus($request,$meal),
                     'category' => $category,
                     'tags' => $tag,
                 ];
@@ -327,7 +327,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'category' => $category,
                     'ingredients' => $ingredient
                 ];
@@ -336,7 +336,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'tags' => $tag,
                     'ingredients' => $ingredient
                 ];
@@ -345,7 +345,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'category' => $category,
                 ];
             } elseif ($tagWith) {
@@ -353,7 +353,7 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'tags' => $tag,
                 ];
             } elseif ($ingredientWith) {
@@ -361,12 +361,11 @@ class HomeController extends AbstractController
                     'id' => $meal['id'],
                     'title' => $meal['title'],
                     'description' => $meal['description'],
-                    'status' => $meal['status'],
+                    'status' => $this->getMealStatus($request,$meal),
                     'ingredients' => $ingredient
                 ];
             }
 
-            
         }
 
         return $data;
@@ -406,6 +405,26 @@ class HomeController extends AbstractController
         );
         $response->setEncodingOptions($response->getEncodingOptions() | JSON_PRETTY_PRINT);
         return $response;
+    }
+
+    public function getMealStatus($request,$meal)
+    {
+        if (isset($request->query->all()['diff_time'])) {
+            $diffTime = date('Y-m-d', $request->query->all()['diff_time']);
+            $diffTime = new \DateTime($diffTime);
+            $diffTime->format('Y-m-d');
+            
+            if ($meal['createdAt'] > $diffTime) {
+                $status = 'created';
+            } elseif ($meal['updatedAt'] > $diffTime) {
+                $status = 'updated';
+            } elseif($meal['deletedAt'] > $diffTime) {
+                $status = 'deleted';
+            }
+
+            return $status;
+
+        }
     }
 
     /**
